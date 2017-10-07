@@ -4,7 +4,6 @@ var keys = require("./keys.js");
 // GET TERMINAL INPUT
 var input = process.argv[2];
 var action = process.argv[3];
-action = undefined;
 var nodeArgs = process.argv;
 
 //OMDB VARS
@@ -13,7 +12,7 @@ var request = require("request");
 var movieName = "";
 
 // SPOTIFY VARS
-var songName;
+var songName = "";
 var Spotify = require('node-spotify-api');
 
 var spotify = new Spotify({
@@ -21,103 +20,99 @@ var spotify = new Spotify({
   secret: "3f9db0fed71c4415a7307566deb0ffac",
 });
 
+/* ---------------------------------------------------------- */
 
-/**************************
- * RUN FUNCTIONS
-**************************/
+// MY TWEETS
 if (input === "my-tweets"){
   tweetThis();
 } 
 
-if (input === "movie-this") {
-  movieThis();
-} 
-
-if(input === "movie-this" && process.argv[3] === undefined){
-  movieName = "mr+nobody";
-  movieThis();
-  return;
-}
-
-if(input === "spotify-this-song"){
-  spotifyThis();
-} 
-
-
-
-if (input === "do-what-it-says"){
-  whatItSays();
-} 
-
-
 /**************************
  * TWITTER LOGIC
 **************************/
- function tweetThis (){
-  keys.client.get('statuses/home_timeline', function(error, tweets, response) {
-     console.log(tweets);   
-      for (var key in tweets){
-        console.log("Posted by: " + tweets[key].user.name);
-        console.log("Date: " + tweets[key].created_at);
-        console.log("Tweet: " + tweets[key].text);
-        console.log("\n-------------\n");
-      }   
-  });//client.get
-} 
+function tweetThis(){
+  if (input === "my-tweets") {
+      keys.client.get('statuses/home_timeline', function(error, tweets, response) {
+          for (var key in tweets){
+            console.log("Posted by: " + tweets[key].user.name);
+            console.log("Date: " + tweets[key].created_at);
+            console.log("Tweet: " + tweets[key].text);
+            console.log("\n-------------\n");
+          }   
+      });//client.get
+  } 
+}
+  
+
+/* ---------------------------------------------------------- */
+
+// MOVIE THIS
+  if (input === "movie-this" && action !== undefined) {
+    for (var i = 3; i < nodeArgs.length; i++) {
+      if (i > 3 && i < nodeArgs.length) {
+        movieName = movieName + "+" + nodeArgs[i];
+      } else {
+        movieName += nodeArgs[i];
+      }  
+    } 
+    console.log("Movie name: " + movieName);
+    movieThis(movieName);
+  } 
+
+  if (input === "movie-this" && action === undefined){
+    movieName = "mr nobody";
+    movieThis(movieName);
+    
+  } 
 
 /**************************
  * OMDB LOGIC
 **************************/
 
-function movieThis() {
-  for (var i = 3; i < nodeArgs.length; i++) {
-      if (i > 3 && i < nodeArgs.length) {
-        movieName = movieName + "+" + nodeArgs[i];
+  function movieThis(movieName) {
+    var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=40e9cece";
+    
+    request(queryUrl, function(error, response, body) {
+      if (!error && response.statusCode === 200) {
+        // console.log(body);
+        console.log("\n-------------\n");
+        console.log("Title: " + JSON.parse(body).Title);
+        console.log("Release Year: " + JSON.parse(body).Year);
+        console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
+        console.log("Country: " + JSON.parse(body).Country);
+        console.log("Language: " + JSON.parse(body).Language);
+        console.log("Plot: " + JSON.parse(body).Plot);
+        console.log("Actors: " + JSON.parse(body).Actors);
+        console.log("\n-------------\n");
       }
-      else {
-        movieName += nodeArgs[i];
-      }
+    });
   }
 
+/* ---------------------------------------------------------- */
 
-  var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=40e9cece";
-  
-  request(queryUrl, function(error, response, body) {
-    if (!error && response.statusCode === 200) {
-      // console.log(body);
-      console.log("\n-------------\n");
-      console.log("Title: " + JSON.parse(body).Title);
-      console.log("Release Year: " + JSON.parse(body).Year);
-      console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
-      console.log("Country: " + JSON.parse(body).Country);
-      console.log("Language: " + JSON.parse(body).Language);
-      console.log("Plot: " + JSON.parse(body).Plot);
-      console.log("Actors: " + JSON.parse(body).Actors);
-      console.log("\n-------------\n");
-    }
-  });
+// SPOTIFY THIS
+if (input === "spotify-this-song" && action !== undefined){  
+  for (var i = 3; i < nodeArgs.length; i++){
+    if (i > 3 && i < nodeArgs.length){
+      songName = songName + "+" + nodeArgs[i];
+    } else {
+      songName += nodeArgs[i];
+    } 
+  }
+  console.log("song name: " + songName);
+  spotifyThis(songName);
+} 
+
+if (input === "spotify-this-song" && action === undefined) {
+  songName = "the+sign";
+  spotifyThis(songName);
 }
-
 
 /**************************
  * SPOTIFY LOGIC
 **************************/
 
-  function spotifyThis(){
-    
-    for (var i = 3; i < nodeArgs.length; i++){
-      if (i > 3 && i < nodeArgs.length){
-        songName = songName + "+" + nodeArgs[i];
-      } else {
-        songName += nodeArgs[i];
-      } 
-    }
-
-    if (input === "spotify-this-song" && action === undefined) {
-      songName = "the+sign";
-    }
-
-    console.log("song name; " + songName);
+  function spotifyThis(songName){
     spotify.search({ type: 'track', query: songName, limit: 1 }, function(err, songData) {
       if (err) {
         return console.log('Error occurred: ' + err);
@@ -138,7 +133,12 @@ function movieThis() {
     });// spotify.search
 }
 
+/* ---------------------------------------------------------- */
 
+// DO WHAT IT SAYS
+if (input === "do-what-it-says"){
+  whatItSays();
+} 
 
 function whatItSays() {
   var fs = require("fs");
@@ -146,12 +146,7 @@ function whatItSays() {
       var dataArr = data.split(',')
       input = dataArr[0];
       songName = dataArr[1];
-      for (var i = 2; i < dataArr.length; i++) {
-          songName = songName + "+"
-          dataArr[i];
-          
-      };
-      spotifyThis();
+      spotifyThis(songName);
   });
 }
 
