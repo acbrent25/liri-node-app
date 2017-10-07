@@ -4,6 +4,7 @@ var keys = require("./keys.js");
 // GET TERMINAL INPUT
 var input = process.argv[2];
 var action = process.argv[3];
+action = undefined;
 var nodeArgs = process.argv;
 
 //OMDB VARS
@@ -12,7 +13,7 @@ var request = require("request");
 var movieName = "";
 
 // SPOTIFY VARS
-var songName = "";
+var songName;
 var Spotify = require('node-spotify-api');
 
 var spotify = new Spotify({
@@ -35,16 +36,14 @@ if (input === "movie-this") {
 if(input === "movie-this" && process.argv[3] === undefined){
   movieName = "mr+nobody";
   movieThis();
+  return;
 }
 
 if(input === "spotify-this-song"){
   spotifyThis();
 } 
 
-if (input === "spotify-this-song" && process.argv[3] === undefined) {
-  songName = "The+Sign+Ace+of+Base"; 
-  spotifyThis();
-}
+
 
 if (input === "do-what-it-says"){
   whatItSays();
@@ -80,6 +79,7 @@ function movieThis() {
       }
   }
 
+
   var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=40e9cece";
   
   request(queryUrl, function(error, response, body) {
@@ -113,6 +113,11 @@ function movieThis() {
       } 
     }
 
+    if (input === "spotify-this-song" && action === undefined) {
+      songName = "the+sign";
+    }
+
+    console.log("song name; " + songName);
     spotify.search({ type: 'track', query: songName, limit: 1 }, function(err, songData) {
       if (err) {
         return console.log('Error occurred: ' + err);
