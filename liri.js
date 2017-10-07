@@ -1,18 +1,18 @@
-/**************************
- * REQUIRE TWITTER
-**************************/
-
+// GET TWITTER KEYS
 var keys = require("./keys.js");
-
 
 // GET TERMINAL INPUT
 var input = process.argv[2];
 var action = process.argv[3];
 var nodeArgs = process.argv;
 
-/**************************
- * SPOTIFY SETUP
-**************************/
+//OMDB VARS
+var request = require("request");
+// var nodeArgs = process.argv;
+var movieName = "";
+
+// SPOTIFY VARS
+var songName = "";
 var Spotify = require('node-spotify-api');
 
 var spotify = new Spotify({
@@ -20,16 +20,43 @@ var spotify = new Spotify({
   secret: "3f9db0fed71c4415a7307566deb0ffac",
 });
 
-// SPOTIFY VARS
-var songName = "";
 
-    
+/**************************
+ * RUN FUNCTIONS
+**************************/
+if (input === "my-tweets"){
+  tweetThis();
+} 
+
+if (input === "movie-this") {
+  movieThis();
+} 
+
+if(input === "movie-this" && process.argv[3] === undefined){
+  movieName = "mr+nobody";
+  movieThis();
+}
+
+if(input === "spotify-this-song"){
+  spotifyThis();
+} 
+
+if (input === "spotify-this-song" && process.argv[3] === undefined) {
+  songName = "The+Sign+Ace+of+Base"; 
+  spotifyThis();
+}
+
+if (input === "do-what-it-says"){
+  whatItSays();
+} 
+
+
 /**************************
  * TWITTER LOGIC
 **************************/
-if (input == "my-tweets") {
+ function tweetThis (){
   keys.client.get('statuses/home_timeline', function(error, tweets, response) {
-    // console.log(tweets);   
+     console.log(tweets);   
       for (var key in tweets){
         console.log("Posted by: " + tweets[key].user.name);
         console.log("Date: " + tweets[key].created_at);
@@ -37,18 +64,13 @@ if (input == "my-tweets") {
         console.log("\n-------------\n");
       }   
   });//client.get
-  return;
 } 
 
 /**************************
  * OMDB LOGIC
 **************************/
-//OMDB VARS
-var request = require("request");
-// var nodeArgs = process.argv;
-var movieName = "";
 
-if (input === "movie-this" && input != "spotify-this-song" && process.argv[3] != undefined) {
+function movieThis() {
   for (var i = 3; i < nodeArgs.length; i++) {
       if (i > 3 && i < nodeArgs.length) {
         movieName = movieName + "+" + nodeArgs[i];
@@ -57,15 +79,7 @@ if (input === "movie-this" && input != "spotify-this-song" && process.argv[3] !=
         movieName += nodeArgs[i];
       }
   }
-  movieThis();
-} 
 
-if (input === "movie-this" && input != "spotify-this-song" && process.argv[3] === undefined) {
-  movieName = "mr+nobody";
-  movieThis();
-}
-
-function movieThis(){
   var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=40e9cece";
   
   request(queryUrl, function(error, response, body) {
@@ -85,35 +99,25 @@ function movieThis(){
 }
 
 
-
-
 /**************************
  * SPOTIFY LOGIC
 **************************/
 
-if (input = "spotify-this-song" && input != "movie-this" && process.argv[3] != undefined){
-  for (var i = 3; i < nodeArgs.length; i++){
-    if (i > 3 && i < nodeArgs.length){
-      songName = songName + "+" + nodeArgs[i];
-    } else {
-      songName += nodeArgs[i];
-    } 
-  }
-  spotifyThis();
-  } 
-  
-  if (input = "spotify-this-song" && input != "movie-this" && process.argv[3] === undefined) {
-  songName = "The+Sign+Ace+of+Base";
-  spotifyThis();
-  }
-
   function spotifyThis(){
     
+    for (var i = 3; i < nodeArgs.length; i++){
+      if (i > 3 && i < nodeArgs.length){
+        songName = songName + "+" + nodeArgs[i];
+      } else {
+        songName += nodeArgs[i];
+      } 
+    }
+
     spotify.search({ type: 'track', query: songName, limit: 1 }, function(err, songData) {
       if (err) {
         return console.log('Error occurred: ' + err);
       }
-    
+   
       for (var key in songData){
         // console.log(songData[key].items);
         var items = songData[key].items;
@@ -127,31 +131,32 @@ if (input = "spotify-this-song" && input != "movie-this" && process.argv[3] != u
         }
       }// key in songData
     });// spotify.search
-  }
-
-/**************************
- * SETUP TO READ OUTSIDE FILE
-**************************/
-  
-var fs = require("fs");
-if (input === "do-what-it-says" && process.argv[3] === undefined){
-  fs.readFile("random.txt", "utf8", function(err, data){
-    if(err){
-      return console.log(err);
-    }
-    var output = data.split(",");
-    var command = output[0];
-    var song = output[1];
-    console.log("do nodeargs: " + nodeArgs);
-
-    if (input = "spotify-this-song"){
-      songName = song;
-      spotifyThis();
-    } else if (input === "movie-this"){
-      movieThis();
-    }
-    
-    });   
 }
+
+
+
+function whatItSays() {
+  var fs = require("fs");
+  fs.readFile("random.txt", "utf8", function (error, data) {  
+      var dataArr = data.split(',')
+      input = dataArr[0];
+      songName = dataArr[1];
+      for (var i = 2; i < dataArr.length; i++) {
+          songName = songName + "+"
+          dataArr[i];
+          
+      };
+      spotifyThis();
+  });
+}
+
+
+
+
+
+
+
+
+
 
 
