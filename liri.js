@@ -22,17 +22,18 @@ var spotify = new Spotify({
 
 /* ---------------------------------------------------------- */
 
-// MY TWEETS
-if (input === "my-tweets"){
-  tweetThis();
-} 
-
 /**************************
  * TWITTER LOGIC
 **************************/
-function tweetThis(){
+
   if (input === "my-tweets") {
-      keys.client.get('statuses/home_timeline', function(error, tweets, response) {
+      keys.client.get('statuses/home_timeline',{count: 5}, function(error, tweets, response) {
+        if (!error) {
+          console.log(error);
+        }
+        
+        // console.log(error);
+        // console.log(tweets.user);
           for (var key in tweets){
             console.log("Posted by: " + tweets[key].user.name);
             console.log("Date: " + tweets[key].created_at);
@@ -41,7 +42,6 @@ function tweetThis(){
           }   
       });//client.get
   } 
-}
   
 
 /* ---------------------------------------------------------- */
